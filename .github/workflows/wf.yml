@@ -1,5 +1,3 @@
-name: Manual Trigger with Advanced Input Validation
-
 on:
   workflow_dispatch:
     inputs:
@@ -11,13 +9,18 @@ on:
         description: "Enter your email"
         required: true
         default: "user@example.com"
-      age:
-        description: "Enter your age"
+      role:
+        description: "Select your role" # Dropdown example
         required: true
-        default: "18"
-      password:
-        description: "Enter a strong password"
-        required: true
+        type: choice
+        options:
+          - Admin
+          - User
+          - Guest
+      newsletter:
+        description: "Subscribe to newsletter (true for yes, false for no)" # Checkbox example
+        required: false
+        default: false
 
 jobs:
   validate-and-run:
@@ -31,7 +34,7 @@ jobs:
         run: |
           echo "Validating inputs..."
 
-          # Validate username (only alphanumeric, 3-15 characters)
+          # Validate username
           if ! [[ "${{ github.event.inputs.username }}" =~ ^[a-zA-Z0-9]{3,15}$ ]]; then
             echo "Error: Username must be alphanumeric and between 3 to 15 characters."
             exit 1
@@ -43,24 +46,14 @@ jobs:
             exit 1
           fi
 
-          # Validate age (integer between 18 and 100)
-          if ! [[ "${{ github.event.inputs.age }}" =~ ^[0-9]+$ ]] || (( ${{ github.event.inputs.age }} < 18 || ${{ github.event.inputs.age }} > 100 )); then
-            echo "Error: Age must be a number between 18 and 100."
+          # Validate role selection
+          if [[ "${{ github.event.inputs.role }}" != "Admin" && "${{ github.event.inputs.role }}" != "User" && "${{ github.event.inputs.role }}" != "Guest" ]]; then
+            echo "Error: Invalid role selected."
             exit 1
           fi
 
-          # Validate password (at least 8 characters, one uppercase, one lowercase, one number, one special character)
-          if ! [[ "${{ github.event.inputs.password }}" =~ ^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$ ]]; then
-            echo "Error: Password must be at least 8 characters long, with one uppercase, one lowercase, one number, and one special character."
-            exit 1
-          fi
-
-          echo "All inputs are valid."
-
-      - name: Execute Main Job
-        run: |
-          echo "Running main job with the following inputs:"
+          echo "Inputs are valid."
           echo "Username: ${{ github.event.inputs.username }}"
           echo "Email: ${{ github.event.inputs.email }}"
-          echo "Age: ${{ github.event.inputs.age }}"
-          echo "Job completed successfully."
+          echo "Role: ${{ github.event.inputs.role }}"
+          echo "Newsletter Subscription: ${{ github.event.inputs.newsletter }}"
