@@ -1,0 +1,66 @@
+name: Manual Trigger with Advanced Input Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      username:
+        description: "Enter your username"
+        required: true
+        default: "user123"
+      email:
+        description: "Enter your email"
+        required: true
+        default: "user@example.com"
+      age:
+        description: "Enter your age"
+        required: true
+        default: "18"
+      password:
+        description: "Enter a strong password"
+        required: true
+
+jobs:
+  validate-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Validate Inputs
+        run: |
+          echo "Validating inputs..."
+
+          # Validate username (only alphanumeric, 3-15 characters)
+          if ! [[ "${{ github.event.inputs.username }}" =~ ^[a-zA-Z0-9]{3,15}$ ]]; then
+            echo "Error: Username must be alphanumeric and between 3 to 15 characters."
+            exit 1
+          fi
+
+          # Validate email format
+          if ! [[ "${{ github.event.inputs.email }}" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+            echo "Error: Invalid email address format."
+            exit 1
+          fi
+
+          # Validate age (integer between 18 and 100)
+          if ! [[ "${{ github.event.inputs.age }}" =~ ^[0-9]+$ ]] || (( ${{ github.event.inputs.age }} < 18 || ${{ github.event.inputs.age }} > 100 )); then
+            echo "Error: Age must be a number between 18 and 100."
+            exit 1
+          fi
+
+          # Validate password (at least 8 characters, one uppercase, one lowercase, one number, one special character)
+          if ! [[ "${{ github.event.inputs.password }}" =~ ^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,}$ ]]; then
+            echo "Error: Password must be at least 8 characters long, with one uppercase, one lowercase, one number, and one special character."
+            exit 1
+          fi
+
+          echo "All inputs are valid."
+
+      - name: Execute Main Job
+        run: |
+          echo "Running main job with the following inputs:"
+          echo "Username: ${{ github.event.inputs.username }}"
+          echo "Email: ${{ github.event.inputs.email }}"
+          echo "Age: ${{ github.event.inputs.age }}"
+          echo "Job completed successfully."
